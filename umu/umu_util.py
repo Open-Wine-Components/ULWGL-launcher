@@ -5,6 +5,7 @@ from re import Pattern, compile
 from shutil import which
 from subprocess import PIPE, STDOUT, Popen, TimeoutExpired
 
+from umu_consts import STEAM_COMPAT, UMU_LOCAL
 from umu_log import log
 
 
@@ -145,3 +146,38 @@ def is_steamdeck() -> bool:
                     break
 
     return is_sd
+
+
+def find_obsoleted() -> None:
+    """Find obsoleted launcher files and log them."""
+    # Obsoleted files in $HOME/.local/share/umu
+    obsoleted: set[str] = {
+        "reaper",
+        "sniper_platform_0.20240125.75305",
+        "BUILD_ID.txt",
+        "umu_version.json",
+        "sniper_platform_0.20231211.70175",
+    }
+
+    for file in UMU_LOCAL.glob("*"):
+        if (
+            file.name.endswith(".py")
+            and file.name.startswith(("umu", "ulwgl"))
+            or file.name in obsoleted
+        ):
+            log.warning("'%s' is obsolete", file)
+
+    # $HOME/.local/share/Steam/compatibilitytool.d
+    if (launcher := STEAM_COMPAT.joinpath("umu-launcher")).is_dir():
+        log.warning("'%s' is obsolete", launcher)
+
+    if (launcher := STEAM_COMPAT.joinpath("ULWGL-Launcher")).is_dir():
+        log.warning("'%s' is obsolete", launcher)
+
+    # $HOME/.cache
+    if (cache := Path.home().joinpath(".cache", "ULWGL")).is_dir():
+        log.warning("'%s' is obsolete", cache)
+
+    # $HOME/.local/share
+    if (ulwgl := Path.home().joinpath(".local", "share", "ULWGL")).is_dir():
+        log.warning("'%s' is obsolete", ulwgl)
